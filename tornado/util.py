@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, with_statement
 
+import threading
 import zlib
 
 
@@ -95,7 +96,18 @@ def raise_exc_info(exc_info):
         raise exc_info[0], exc_info[1], exc_info[2]
         # After 2to3: raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
 
-
 def doctests():
     import doctest
     return doctest.DocTestSuite()
+
+# Wrapper for threading.get_ident on all platforms
+try:
+    threading_get_ident = threading.get_ident # Python 3.3+
+except AttributeError:
+    try:
+        import thread
+        threading_get_ident = thread.get_ident # Python 2.x
+        # after 2to3, this code becomes 3.x only
+    except (ImportError,AttributeError):
+        def threading_get_ident():
+            return threading.current_thread().ident # Python 2.5+

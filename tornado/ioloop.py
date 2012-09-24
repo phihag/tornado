@@ -34,12 +34,12 @@ import heapq
 import logging
 import os
 import select
-import thread
 import threading
 import time
 import traceback
 
 from tornado.log import app_log, gen_log
+from tornado.util import threading_get_ident
 from tornado import stack_context
 
 try:
@@ -267,7 +267,7 @@ class IOLoop(object):
         if self._stopped:
             self._stopped = False
             return
-        self._thread_ident = thread.get_ident()
+        self._thread_ident = threading_get_ident()
         self._running = True
 
         # signal.set_wakeup_fd closes a race condition in event loops:
@@ -451,7 +451,7 @@ class IOLoop(object):
         with self._callback_lock:
             list_empty = not self._callbacks
             self._callbacks.append(stack_context.wrap(callback))
-        if list_empty and thread.get_ident() != self._thread_ident:
+        if list_empty and threading_get_ident() != self._thread_ident:
             # If we're in the IOLoop's thread, we know it's not currently
             # polling.  If we're not, and we added the first callback to an
             # empty list, we may need to wake it up (it may wake up on its

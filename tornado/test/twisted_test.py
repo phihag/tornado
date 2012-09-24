@@ -23,7 +23,6 @@ import os
 import shutil
 import signal
 import tempfile
-import thread
 import threading
 
 try:
@@ -47,7 +46,7 @@ from tornado.ioloop import IOLoop
 from tornado.platform.auto import set_close_exec
 from tornado.testing import bind_unused_port
 from tornado.test.util import unittest
-from tornado.util import import_object
+from tornado.util import import_object,threading_get_ident
 from tornado.web import RequestHandler, Application
 
 skipIfNoTwisted = unittest.skipUnless(have_twisted,
@@ -147,20 +146,20 @@ ReactorTwoCallLaterTest = skipIfNoTwisted(ReactorTwoCallLaterTest)
 class ReactorCallFromThreadTest(ReactorTestCase):
     def setUp(self):
         super(ReactorCallFromThreadTest, self).setUp()
-        self._mainThread = thread.get_ident()
+        self._mainThread = threading_get_ident()
 
     def tearDown(self):
         self._thread.join()
         super(ReactorCallFromThreadTest, self).tearDown()
 
     def _newThreadRun(self):
-        self.assertNotEqual(self._mainThread, thread.get_ident())
+        self.assertNotEqual(self._mainThread, threading_get_ident())
         if hasattr(self._thread, 'ident'):  # new in python 2.6
-            self.assertEqual(self._thread.ident, thread.get_ident())
+            self.assertEqual(self._thread.ident, threading_get_ident())
         self._reactor.callFromThread(self._fnCalledFromThread)
 
     def _fnCalledFromThread(self):
-        self.assertEqual(self._mainThread, thread.get_ident())
+        self.assertEqual(self._mainThread, threading_get_ident())
         self._reactor.stop()
 
     def _whenRunningCallback(self):
@@ -176,10 +175,10 @@ ReactorCallFromThreadTest = skipIfNoTwisted(ReactorCallFromThreadTest)
 class ReactorCallInThread(ReactorTestCase):
     def setUp(self):
         super(ReactorCallInThread, self).setUp()
-        self._mainThread = thread.get_ident()
+        self._mainThread = threading_get_ident()
 
     def _fnCalledInThread(self, *args, **kwargs):
-        self.assertNotEqual(thread.get_ident(), self._mainThread)
+        self.assertNotEqual(threading_get_ident(), self._mainThread)
         self._reactor.callFromThread(lambda: self._reactor.stop())
 
     def _whenRunningCallback(self):
